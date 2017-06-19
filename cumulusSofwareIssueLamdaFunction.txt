@@ -1,0 +1,35 @@
+var http = require('http');
+
+exports.handler = (event, context, callback) => {
+    var software = event.currentIntent.slots.software;
+    http.get("http://54.242.246.205:8090/issuetracker/issue/"+software, function(response) {
+        console.log("Got response: " + response.statusCode); 
+        
+        var body = ''; 
+        response.on('data', function(data){
+            body += data;
+        });
+        response.on('end', function() {
+            var responseMsg = JSON.parse(body);
+            var content = "Please find the instrctions here. " + responseMsg.knowledgeRepository + " and " + responseMsg.workaroundStep;
+            console.log("Response Msg: " + content);
+            
+            callback(null, {
+                "dialogAction": {
+                    "type": "Close",
+                    "fulfillmentState": "Fulfilled",
+                    "message": {
+                        "contentType": "PlainText",
+                        "content": content
+                    }
+                }
+            });
+        });
+        
+        
+    }).on('error', function(error) {
+        console.log("Got error: " + error.message);
+        callback('Error with the request. [' + error.message + ']');
+    });
+
+};
